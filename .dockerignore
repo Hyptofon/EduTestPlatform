@@ -1,0 +1,6 @@
+﻿**/.env
+**/.vs
+**/.vscode
+**/bin
+**/obj
+.idea/

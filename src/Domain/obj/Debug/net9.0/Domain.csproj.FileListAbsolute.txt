@@ -1,0 +1,12 @@
+E:\EduTestPlatform\src\Domain\bin\Debug\net9.0\Domain.deps.json
+E:\EduTestPlatform\src\Domain\bin\Debug\net9.0\Domain.dll
+E:\EduTestPlatform\src\Domain\bin\Debug\net9.0\Domain.pdb
+E:\EduTestPlatform\src\Domain\obj\Debug\net9.0\Domain.csproj.AssemblyReference.cache
+E:\EduTestPlatform\src\Domain\obj\Debug\net9.0\Domain.GeneratedMSBuildEditorConfig.editorconfig
+E:\EduTestPlatform\src\Domain\obj\Debug\net9.0\Domain.AssemblyInfoInputs.cache
+E:\EduTestPlatform\src\Domain\obj\Debug\net9.0\Domain.AssemblyInfo.cs
+E:\EduTestPlatform\src\Domain\obj\Debug\net9.0\Domain.csproj.CoreCompileInputs.cache
+E:\EduTestPlatform\src\Domain\obj\Debug\net9.0\Domain.dll
+E:\EduTestPlatform\src\Domain\obj\Debug\net9.0\refint\Domain.dll
+E:\EduTestPlatform\src\Domain\obj\Debug\net9.0\Domain.pdb
+E:\EduTestPlatform\src\Domain\obj\Debug\net9.0\ref\Domain.dll
