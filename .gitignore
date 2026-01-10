@@ -1,0 +1,17 @@
+.idea/
+.vs/
+.vscode/
+*.user
+*.sln.docstates
+
+**/bin/
+**/obj/
+
+.env
+.env.*
+!.env.example
+
+*.log
+**/packages/*
+!**/packages/build/
+.lastcodeanalysissucceeded
