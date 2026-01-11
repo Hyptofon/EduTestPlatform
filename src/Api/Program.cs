@@ -1,4 +1,5 @@
 using Api.Filters;
+using Api.Hubs; 
 using Application;
 using Infrastructure;
 using Infrastructure.Persistence;
@@ -47,6 +48,8 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
+builder.Services.AddSignalR();
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll",
@@ -72,7 +75,6 @@ using (var scope = app.Services.CreateScope())
     }
 }
 
-
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -86,5 +88,6 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+app.MapHub<MonitoringHub>("/hubs/monitoring");
 
 app.Run();
