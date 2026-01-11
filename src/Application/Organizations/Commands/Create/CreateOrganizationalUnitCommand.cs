@@ -1,5 +1,6 @@
 ﻿using Application.Common.Interfaces;
 using Domain.Organizations;
+using Domain.Users;
 using LanguageExt;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -9,9 +10,10 @@ namespace Application.Organizations.Commands.Create;
 public record CreateOrganizationalUnitCommand : IRequest<Either<Exception, Guid>>
 {
     public required string Name { get; init; }
-    public required string Type { get; init; } // "Root", "Faculty", etc.
+    public required string Type { get; init; }
     public Guid? ParentId { get; init; }
     public bool GenerateInvite { get; init; }
+    public UserRole? InviteTargetRole { get; init; } // Роль для інвайту
 }
 
 public class CreateOrganizationalUnitCommandHandler(IApplicationDbContext context)
@@ -23,13 +25,11 @@ public class CreateOrganizationalUnitCommandHandler(IApplicationDbContext contex
     {
         try
         {
-            // 1. Валідація типу
             if (!Enum.TryParse<OrganizationalUnitType>(request.Type, true, out var type))
             {
                 return new ArgumentException($"Invalid organization type: {request.Type}");
             }
 
-            // 2. Перевірка батьківського елементу (якщо вказаний)
             OrganizationalUnitId? parentId = null;
             if (request.ParentId.HasValue)
             {
@@ -44,27 +44,33 @@ public class CreateOrganizationalUnitCommandHandler(IApplicationDbContext contex
             }
             else if (type != OrganizationalUnitType.Root)
             {
-                // Якщо це не корінь (Універ/Школа), то батько обовязковий
                 return new ArgumentException("ParentId is required for non-root organizations.");
             }
 
-            // 3. Створення сутності
             var orgUnit = OrganizationalUnit.Create(request.Name, type, parentId);
 
-            // 4. Генерація інвайт-коду (якщо треба)
-            if (request.GenerateInvite)
-            {
-                // Генеруємо код: "KPI-2024" або "CLASS-11A"
-                // Простий генератор для прикладу
-                var prefix = request.Name.Replace(" ", "").ToUpper().Substring(0, Math.Min(3, request.Name.Length));
-                var code = $"{prefix}-{Guid.NewGuid().ToString().Substring(0, 4).ToUpper()}";
-                
-                orgUnit.SetInviteCode(code);
-            }
-
-            // 5. Збереження
             context.OrganizationalUnits.Add(orgUnit);
             await context.SaveChangesAsync(cancellationToken);
+
+            // Генерація InviteCode (якщо запитано)
+            if (request.GenerateInvite && request.InviteTargetRole.HasValue)
+            {
+                var prefix = request.Name.Replace(" ", "").ToUpper().Substring(0, Math.Min(3, request.Name.Length));
+                var rolePrefix = request.InviteTargetRole.Value.ToString().ToUpper().Substring(0, Math.Min(4, request.InviteTargetRole.Value.ToString().Length));
+                var randomPart = Guid.NewGuid().ToString().Substring(0, 4).ToUpper();
+                
+                var code = $"{prefix}-{rolePrefix}-{randomPart}";
+
+                var inviteCode = InviteCode.Generate(
+                    code,
+                    request.InviteTargetRole.Value,
+                    orgUnit.Id,
+                    null, // Без терміну дії
+                    100); // Багаторазовий для Root організацій
+
+                context.InviteCodes.Add(inviteCode);
+                await context.SaveChangesAsync(cancellationToken);
+            }
 
             return orgUnit.Id.Value;
         }

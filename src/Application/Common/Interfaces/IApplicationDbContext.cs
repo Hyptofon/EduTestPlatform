@@ -1,5 +1,6 @@
 ﻿using System.Data;
 using Domain.Audit;
+using Domain.Enrollments;
 using Domain.Media;
 using Domain.Organizations;
 using Domain.Tests;
@@ -17,6 +18,8 @@ public interface IApplicationDbContext
     DbSet<MediaFile> MediaFiles { get; }
     DbSet<AuditLog> AuditLogs { get; }
     DbSet<RefreshToken> RefreshTokens { get; }
+    DbSet<InviteCode> InviteCodes { get; }
+    DbSet<StudentSubject> StudentSubjects { get; }
     DbSet<ApplicationUser> Users { get; }
     DbSet<ApplicationRole> Roles { get; }
 

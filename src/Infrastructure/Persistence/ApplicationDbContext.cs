@@ -3,6 +3,7 @@ using System.Reflection;
 using Application.Common.Interfaces;
 using Infrastructure.Persistence.Converters;
 using Domain.Audit;
+using Domain.Enrollments; 
 using Domain.Media;
 using Domain.Organizations;
 using Domain.Tests;
@@ -23,8 +24,9 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     public DbSet<MediaFile> MediaFiles { get; init; }
     public DbSet<AuditLog> AuditLogs { get; init; }
     public DbSet<RefreshToken> RefreshTokens { get; init; }
+    public DbSet<InviteCode> InviteCodes { get; init; }
+    public DbSet<StudentSubject> StudentSubjects { get; init; } // ← ДОДАНО
 
-    // Явна реалізація інтерфейсу IApplicationDbContext для Identity таблиць
     public new DbSet<ApplicationUser> Users => Set<ApplicationUser>();
     public new DbSet<ApplicationRole> Roles => Set<ApplicationRole>();
 
@@ -34,7 +36,6 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
 
         modelBuilder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
 
-        // Застосування Converter для всіх DateTime полів (як в репозиторії)
         foreach (var entityType in modelBuilder.Model.GetEntityTypes())
         {
             foreach (var property in entityType.GetProperties())
@@ -46,7 +47,6 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
             }
         }
 
-        // Identity Tables naming convention
         modelBuilder.Entity<ApplicationUser>().ToTable("users");
         modelBuilder.Entity<ApplicationRole>().ToTable("roles");
         modelBuilder.Entity<IdentityUserRole<Guid>>().ToTable("user_roles");

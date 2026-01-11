@@ -29,7 +29,7 @@ public class GetOrganizationalUnitByIdQueryHandler(IApplicationDbContext context
             org.Name,
             org.Type.ToString(),
             org.ParentId?.Value,
-            org.InviteCode
+            null
         );
     }
 }

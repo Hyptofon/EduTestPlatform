@@ -12,7 +12,7 @@ public class OrganizationalUnit : Entity<OrganizationalUnitId>
     
     public virtual ICollection<OrganizationalUnit> Children { get; private set; } = new List<OrganizationalUnit>();
 
-    public string? InviteCode { get; private set; }
+    public string? AccessKey { get; private set; } 
 
     private OrganizationalUnit(OrganizationalUnitId id) : base(id) { }
 
@@ -26,6 +26,26 @@ public class OrganizationalUnit : Entity<OrganizationalUnitId>
         };
     }
 
-    public void SetInviteCode(string code) => InviteCode = code;
     public void AddChild(OrganizationalUnit child) => Children.Add(child);
+    
+    public bool IsPublic => string.IsNullOrEmpty(AccessKey);
+
+    public void SetAccessKey(string key)
+    {
+        if (Type != OrganizationalUnitType.Subject)
+            throw new InvalidOperationException("Only subjects can have access keys");
+
+        AccessKey = key;
+    }
+
+    public void RemoveAccessKey()
+    {
+        AccessKey = null;
+    }
+
+    public bool ValidateAccessKey(string key)
+    {
+        if (IsPublic) return true;
+        return AccessKey == key;
+    }
 }

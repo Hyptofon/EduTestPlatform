@@ -16,7 +16,10 @@ public class OrganizationalUnitConfiguration : IEntityTypeConfiguration<Organiza
 
         builder.Property(x => x.Type).HasConversion<string>();
 
-        // Composite Pattern (Tree structure)
+        builder.Property(x => x.AccessKey) 
+            .HasMaxLength(255)
+            .IsRequired(false);
+
         builder.HasOne(x => x.Parent)
             .WithMany(x => x.Children)
             .HasForeignKey(x => x.ParentId)

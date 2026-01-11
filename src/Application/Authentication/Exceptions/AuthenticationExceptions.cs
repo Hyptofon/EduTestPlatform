@@ -27,7 +27,6 @@ public class TokenRefreshFailedException(string errors)
 public class UserCreationException(string errors)
     : AuthenticationException($"Failed to create user: {errors}");
 
-// --- Специфічні для EduTestPlatform ---
 public class InvalidInviteCodeException(string code)
     : AuthenticationException($"Invite code '{code}' is invalid or expired.");
 

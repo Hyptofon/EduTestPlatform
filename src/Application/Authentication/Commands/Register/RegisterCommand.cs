@@ -28,11 +28,17 @@ public class RegisterCommandHandler(
         RegisterCommand request,
         CancellationToken cancellationToken)
     {
-        // 1. Валідація Інвайт-коду 
-        var orgUnit = await context.OrganizationalUnits
-            .FirstOrDefaultAsync(x => x.InviteCode == request.InviteCode, cancellationToken);
+        // 1. Валідація Інвайт-коду з БД
+        var inviteCode = await context.InviteCodes
+            .Include(x => x.OrganizationalUnit)
+            .FirstOrDefaultAsync(x => x.Code == request.InviteCode.ToUpperInvariant(), cancellationToken);
 
-        if (orgUnit == null)
+        if (inviteCode == null)
+        {
+            return new InvalidInviteCodeException(request.InviteCode);
+        }
+
+        if (!inviteCode.IsValid())
         {
             return new InvalidInviteCodeException(request.InviteCode);
         }
@@ -46,6 +52,7 @@ public class RegisterCommandHandler(
 
         try
         {
+            // 3. Створення користувача
             var user = new ApplicationUser
             {
                 UserName = request.Email,
@@ -62,26 +69,29 @@ public class RegisterCommandHandler(
                 return new UserCreationException(errors);
             }
             
-            var roleName = UserRole.Student.ToString(); 
+            var roleName = inviteCode.TargetRole.ToString(); 
+            await userManager.AddToRoleAsync(user, roleName); 
             
-             await userManager.AddToRoleAsync(user, roleName); 
-
             var userOrg = new UserOrganization
             {
                 UserId = user.Id,
-                OrganizationalUnitId = orgUnit.Id,
-                Role = UserRole.Student
+                OrganizationalUnitId = inviteCode.OrganizationalUnitId,
+                Role = inviteCode.TargetRole
             };
             
             context.Users.Attach(user);
             user.Organizations.Add(userOrg);
+
+            
+            inviteCode.MarkAsUsed();
+            context.InviteCodes.Update(inviteCode);
+
             await context.SaveChangesAsync(cancellationToken);
-
-
+            
             var roles = new List<string> { roleName };
             
             var accessToken = jwtTokenGenerator.GenerateToken(user, roles);
-            var refreshTokenString = jwtTokenGenerator.GenerateRefreshToken(); // ПЕРЕЙМЕНУВАВ
+            var refreshTokenString = jwtTokenGenerator.GenerateRefreshToken();
 
             var refreshTokenEntity = Domain.Users.RefreshToken.Create(
                 refreshTokenString, 

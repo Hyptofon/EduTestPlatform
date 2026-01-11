@@ -3,6 +3,7 @@ using Application.Common.Interfaces;
 using Domain.Users;
 using Infrastructure.Authentication;
 using Infrastructure.Persistence;
+using Infrastructure.Services; 
 using Microsoft.AspNetCore.Authentication.JwtBearer; 
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -41,7 +42,6 @@ public static class ConfigureInfrastructureServices
             options.Configuration = configuration.GetConnectionString("Redis");
         });
 
-        // --- ВИПРАВЛЕННЯ: Налаштування JWT Auth ---
         var jwtSettings = new JwtSettings();
         configuration.Bind(JwtSettings.SectionName, jwtSettings);
         services.AddSingleton(Options.Create(jwtSettings));
@@ -61,7 +61,9 @@ public static class ConfigureInfrastructureServices
                     IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.Secret))
                 };
             });
-        // -------------------------------------------
+        services.AddHttpContextAccessor();
+        services.AddScoped<ICurrentUserService, CurrentUserService>();
+
         services.AddScoped<ApplicationDbContextInitialiser>();
         return services;
     }

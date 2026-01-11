@@ -1,6 +1,5 @@
 ﻿using Domain.TestSessions;
 using Domain.Tests;
-using Domain.Users;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -15,9 +14,8 @@ public class TestSessionConfiguration : IEntityTypeConfiguration<TestSession>
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id).HasConversion(id => id.Value, value => new TestSessionId(value));
         builder.Property(x => x.TestId).HasConversion(id => id.Value, value => new TestId(value));
-        builder.Property(x => x.StudentId).HasConversion(id => id.Value, value => new UserId(value));
+        builder.Property(x => x.StudentId).IsRequired(); // ← Guid, не UserId
 
-        // JSONB для відповідей та логів порушень
         builder.OwnsMany(x => x.Answers, a => { a.ToJson(); });
         builder.OwnsMany(x => x.Violations, v => { v.ToJson(); });
     }
