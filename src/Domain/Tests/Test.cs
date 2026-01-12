@@ -1,47 +1,101 @@
-﻿using Domain.Common;
-using Domain.Organizations;
+﻿using Domain.Subjects;
 
 namespace Domain.Tests;
 
-public class Test : Entity<TestId>
+public class Test
 {
-    public required string Title { get; set; }
-    public string Description { get; set; } = string.Empty;
-    
-    public OrganizationalUnitId SubjectId { get; private set; }
-    public Guid AuthorId { get; private set; } 
+    public TestId Id { get; }
+    public SubjectId SubjectId { get; }
+    public Guid CreatedByUserId { get; }
+    public string Title { get; private set; }
+    public string? Description { get; private set; }
+    public TestSettings Settings { get; private set; }
+    public string ContentJson { get; private set; }
+    public DateTime CreatedAt { get; }
+    public DateTime? UpdatedAt { get; private set; }
 
-    public TestContent Content { get; private set; }
-    public required TestSettings Settings { get; set; } 
-    
-    public bool IsDraft { get; private set; } = true;
+    public Subject? Subject { get; private set; }
+    public ICollection<TestSession>? Sessions { get; private set; } = [];
 
-    private Test(TestId id, OrganizationalUnitId subjectId, Guid authorId) : base(id)
+    private Test(
+        TestId id,
+        SubjectId subjectId,
+        Guid createdByUserId,
+        string title,
+        string? description,
+        TestSettings settings,
+        string contentJson,
+        DateTime createdAt,
+        DateTime? updatedAt)
     {
+        Id = id;
         SubjectId = subjectId;
-        AuthorId = authorId;
-        Content = new TestContent();
+        CreatedByUserId = createdByUserId;
+        Title = title;
+        Description = description;
+        Settings = settings;
+        ContentJson = contentJson;
+        CreatedAt = createdAt;
+        UpdatedAt = updatedAt;
     }
 
-    public static Test Create(string title, string description, OrganizationalUnitId subjectId, Guid authorId, TestSettings settings)
+    public static Test New(
+        TestId id,
+        SubjectId subjectId,
+        Guid createdByUserId,
+        string title,
+        string? description,
+        TestSettings settings,
+        string contentJson)
     {
-        return new Test(TestId.New(), subjectId, authorId)
-        {
-            Title = title,
-            Description = description,
-            Settings = settings
-        };
+        if (string.IsNullOrWhiteSpace(title))
+            throw new ArgumentException("Test title cannot be empty", nameof(title));
+
+        if (string.IsNullOrWhiteSpace(contentJson))
+            throw new ArgumentException("Test content cannot be empty", nameof(contentJson));
+
+        return new Test(
+            id,
+            subjectId,
+            createdByUserId,
+            title,
+            description,
+            settings,
+            contentJson,
+            DateTime.UtcNow,
+            null);
     }
 
-    public void UpdateContent(TestContent content)
+    public void UpdateDetails(string title, string? description, TestSettings settings)
     {
-        if (!IsDraft) throw new InvalidOperationException("Cannot modify published test.");
-        Content = content;
+        if (string.IsNullOrWhiteSpace(title))
+            throw new ArgumentException("Test title cannot be empty", nameof(title));
+
+        Title = title;
+        Description = description;
+        Settings = settings;
+        UpdatedAt = DateTime.UtcNow;
     }
 
-    public void Publish()
+    public void UpdateContent(string contentJson)
     {
-        if (Content.Sections.Count == 0) throw new InvalidOperationException("Cannot publish empty test.");
-        IsDraft = false;
+        if (string.IsNullOrWhiteSpace(contentJson))
+            throw new ArgumentException("Test content cannot be empty", nameof(contentJson));
+
+        ContentJson = contentJson;
+        UpdatedAt = DateTime.UtcNow;
+    }
+
+    public bool IsAccessible()
+    {
+        var now = DateTime.UtcNow;
+
+        if (Settings.StartDate.HasValue && now < Settings.StartDate.Value)
+            return false;
+
+        if (Settings.EndDate.HasValue && now > Settings.EndDate.Value)
+            return false;
+
+        return true;
     }
 }

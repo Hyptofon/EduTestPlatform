@@ -2,9 +2,9 @@
 
 public enum OrganizationalUnitType
 {
-    Root = 0,       // Університет або Школа
-    Faculty = 1,    // Факультет
-    Department = 2, // Кафедра або Клас (в школі)
-    Subject = 3,    // Предмет (Кінцева точка)
-    Group = 4       // Академічна група (опціонально)
+    Root = 0,
+    Faculty = 1,
+    Department = 2,
+    Class = 3,
+    Subject = 4
 }

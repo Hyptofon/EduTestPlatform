@@ -1,51 +1,75 @@
-﻿using Domain.Common;
+﻿namespace Domain.Organizations;
 
-namespace Domain.Organizations;
-
-public class OrganizationalUnit : Entity<OrganizationalUnitId>
+public class OrganizationalUnit
 {
-    public required string Name { get; set; }
-    public OrganizationalUnitType Type { get; private set; }
-    
+    public OrganizationalUnitId Id { get; }
+    public OrganizationId OrganizationId { get; }
     public OrganizationalUnitId? ParentId { get; private set; }
-    public virtual OrganizationalUnit? Parent { get; private set; }
-    
-    public virtual ICollection<OrganizationalUnit> Children { get; private set; } = new List<OrganizationalUnit>();
+    public OrganizationalUnitType Type { get; private set; }
+    public string Name { get; private set; }
+    public string? Settings { get; private set; }
+    public DateTime CreatedAt { get; }
+    public DateTime? UpdatedAt { get; private set; }
 
-    public string? AccessKey { get; private set; } 
+    public Organization? Organization { get; private set; }
+    public OrganizationalUnit? Parent { get; private set; }
+    public ICollection<OrganizationalUnit>? Children { get; private set; } = [];
 
-    private OrganizationalUnit(OrganizationalUnitId id) : base(id) { }
-
-    public static OrganizationalUnit Create(string name, OrganizationalUnitType type, OrganizationalUnitId? parentId)
+    private OrganizationalUnit(
+        OrganizationalUnitId id,
+        OrganizationId organizationId,
+        OrganizationalUnitId? parentId,
+        OrganizationalUnitType type,
+        string name,
+        string? settings,
+        DateTime createdAt,
+        DateTime? updatedAt)
     {
-        return new OrganizationalUnit(OrganizationalUnitId.New())
-        {
-            Name = name,
-            Type = type,
-            ParentId = parentId
-        };
+        Id = id;
+        OrganizationId = organizationId;
+        ParentId = parentId;
+        Type = type;
+        Name = name;
+        Settings = settings;
+        CreatedAt = createdAt;
+        UpdatedAt = updatedAt;
     }
 
-    public void AddChild(OrganizationalUnit child) => Children.Add(child);
-    
-    public bool IsPublic => string.IsNullOrEmpty(AccessKey);
-
-    public void SetAccessKey(string key)
+    public static OrganizationalUnit New(
+        OrganizationalUnitId id,
+        OrganizationId organizationId,
+        OrganizationalUnitId? parentId,
+        OrganizationalUnitType type,
+        string name,
+        string? settings = null)
     {
-        if (Type != OrganizationalUnitType.Subject)
-            throw new InvalidOperationException("Only subjects can have access keys");
+        if (string.IsNullOrWhiteSpace(name))
+            throw new ArgumentException("Unit name cannot be empty", nameof(name));
 
-        AccessKey = key;
+        return new OrganizationalUnit(
+            id,
+            organizationId,
+            parentId,
+            type,
+            name,
+            settings,
+            DateTime.UtcNow,
+            null);
     }
 
-    public void RemoveAccessKey()
+    public void UpdateDetails(string name, string? settings)
     {
-        AccessKey = null;
+        if (string.IsNullOrWhiteSpace(name))
+            throw new ArgumentException("Unit name cannot be empty", nameof(name));
+
+        Name = name;
+        Settings = settings;
+        UpdatedAt = DateTime.UtcNow;
     }
 
-    public bool ValidateAccessKey(string key)
+    public void ChangeParent(OrganizationalUnitId? newParentId)
     {
-        if (IsPublic) return true;
-        return AccessKey == key;
+        ParentId = newParentId;
+        UpdatedAt = DateTime.UtcNow;
     }
 }

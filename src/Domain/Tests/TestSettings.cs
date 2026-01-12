@@ -1,30 +1,73 @@
-﻿using Domain.Common;
+﻿namespace Domain.Tests;
 
-namespace Domain.Tests;
-
-public class TestSettings : ValueObject
+public class TestSettings
 {
-    public TimeSpan TimeLimit { get; private set; }
+    public int? TimeLimitMinutes { get; private set; }
     public DateTime? StartDate { get; private set; }
     public DateTime? EndDate { get; private set; }
-    public bool ShuffleQuestions { get; private set; }
+    public int? BankModeQuestionCount { get; private set; }
+    public bool ShuffleAnswers { get; private set; }
+    public ResultDisplayPolicy ResultDisplayPolicy { get; private set; }
     public int MaxAttempts { get; private set; }
+    public bool IsPublic { get; private set; }
 
-    public TestSettings(TimeSpan timeLimit, DateTime? startDate, DateTime? endDate, bool shuffleQuestions, int maxAttempts)
+    private TestSettings(
+        int? timeLimitMinutes,
+        DateTime? startDate,
+        DateTime? endDate,
+        int? bankModeQuestionCount,
+        bool shuffleAnswers,
+        ResultDisplayPolicy resultDisplayPolicy,
+        int maxAttempts,
+        bool isPublic)
     {
-        TimeLimit = timeLimit;
+        TimeLimitMinutes = timeLimitMinutes;
         StartDate = startDate;
         EndDate = endDate;
-        ShuffleQuestions = shuffleQuestions;
+        BankModeQuestionCount = bankModeQuestionCount;
+        ShuffleAnswers = shuffleAnswers;
+        ResultDisplayPolicy = resultDisplayPolicy;
         MaxAttempts = maxAttempts;
+        IsPublic = isPublic;
     }
 
-    protected override IEnumerable<object> GetEqualityComponents()
+    public static TestSettings Default()
     {
-        yield return TimeLimit;
-        yield return ShuffleQuestions;
-        yield return MaxAttempts;
-        if (StartDate.HasValue) yield return StartDate;
-        if (EndDate.HasValue) yield return EndDate;
+        return new TestSettings(
+            null,
+            null,
+            null,
+            null,
+            false,
+            ResultDisplayPolicy.Immediate,
+            1,
+            true);
+    }
+
+    public static TestSettings New(
+        int? timeLimitMinutes,
+        DateTime? startDate,
+        DateTime? endDate,
+        int? bankModeQuestionCount,
+        bool shuffleAnswers,
+        ResultDisplayPolicy resultDisplayPolicy,
+        int maxAttempts,
+        bool isPublic)
+    {
+        if (maxAttempts < 1)
+            throw new ArgumentException("Max attempts must be at least 1", nameof(maxAttempts));
+
+        if (bankModeQuestionCount.HasValue && bankModeQuestionCount.Value < 1)
+            throw new ArgumentException("Bank mode question count must be at least 1", nameof(bankModeQuestionCount));
+
+        return new TestSettings(
+            timeLimitMinutes,
+            startDate,
+            endDate,
+            bankModeQuestionCount,
+            shuffleAnswers,
+            resultDisplayPolicy,
+            maxAttempts,
+            isPublic);
     }
 }
