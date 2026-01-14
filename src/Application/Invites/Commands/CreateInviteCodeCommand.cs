@@ -3,6 +3,7 @@ using Application.Common.Interfaces.Repositories;
 using Application.Invites.Exceptions;
 using Domain.Invites;
 using Domain.Organizations;
+using Domain.Users;
 using LanguageExt;
 using MediatR;
 
@@ -23,6 +24,7 @@ public class CreateInviteCodeCommandHandler(
     IInviteCodeRepository inviteCodeRepository,
     IOrganizationRepository organizationRepository,
     IOrganizationalUnitRepository unitRepository,
+    ICurrentUserService currentUserService, 
     IApplicationDbContext dbContext)
     : IRequestHandler<CreateInviteCodeCommand, Either<InviteCodeException, InviteCode>>
 {
@@ -30,6 +32,29 @@ public class CreateInviteCodeCommandHandler(
         CreateInviteCodeCommand request,
         CancellationToken cancellationToken)
     {
+        // --- SECURITY CHECK START ---
+        // 1. Вчителі можуть створювати ТІЛЬКИ коди для студентів
+        if (currentUserService.IsInRole(ApplicationRole.Teacher))
+        {
+            if (request.Type != InviteCodeType.Student)
+            {
+                return new InviteCodeNotValidException(
+                    request.Code ?? "new", 
+                    "Teachers are only allowed to generate Student invite codes.");
+            }
+        }
+
+        // 2. Адміни організації не можуть створювати Master-коди (це для Супер-адміна)
+        if (currentUserService.IsInRole(ApplicationRole.OrganizationAdmin))
+        {
+            if (request.Type == InviteCodeType.Master)
+            {
+                return new InviteCodeNotValidException(
+                    request.Code ?? "new", 
+                    "Organization Admins cannot generate Master invite codes.");
+            }
+        }
+
         if (!string.IsNullOrWhiteSpace(request.Code))
         {
             var existingCode = await inviteCodeRepository.GetByCodeAsync(request.Code, cancellationToken);

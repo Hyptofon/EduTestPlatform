@@ -68,11 +68,12 @@ public class RegisterCommandHandler(
                     {
                         inviteCode.Use();
                         inviteCodeRepository.Update(inviteCode);
-
+                        
                         var userOrganization = UserOrganization.New(
                             user.Id,
                             inviteCode.OrganizationId,
-                            inviteCode.AssignedRole);
+                            inviteCode.AssignedRole,
+                            inviteCode.OrganizationalUnitId); 
 
                         userOrganizationRepository.Add(userOrganization);
 

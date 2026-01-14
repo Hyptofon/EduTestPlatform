@@ -7,22 +7,26 @@ public class UserOrganization
     public UserOrganizationId Id { get; }
     public Guid UserId { get; }
     public OrganizationId OrganizationId { get; }
+    public OrganizationalUnitId? OrganizationalUnitId { get; private set; } 
     public string Role { get; private set; }
     public DateTime JoinedAt { get; }
 
     public ApplicationUser? User { get; private set; }
     public Organization? Organization { get; private set; }
+    public OrganizationalUnit? OrganizationalUnit { get; private set; }
 
     private UserOrganization(
         UserOrganizationId id,
         Guid userId,
         OrganizationId organizationId,
+        OrganizationalUnitId? organizationalUnitId,
         string role,
         DateTime joinedAt)
     {
         Id = id;
         UserId = userId;
         OrganizationId = organizationId;
+        OrganizationalUnitId = organizationalUnitId;
         Role = role;
         JoinedAt = joinedAt;
     }
@@ -30,7 +34,8 @@ public class UserOrganization
     public static UserOrganization New(
         Guid userId,
         OrganizationId organizationId,
-        string role)
+        string role,
+        OrganizationalUnitId? organizationalUnitId = null)
     {
         if (string.IsNullOrWhiteSpace(role))
             throw new ArgumentException("Role cannot be empty", nameof(role));
@@ -39,6 +44,7 @@ public class UserOrganization
             UserOrganizationId.New(),
             userId,
             organizationId,
+            organizationalUnitId,
             role,
             DateTime.UtcNow);
     }

@@ -15,6 +15,9 @@ public class UserOrganizationConfiguration : IEntityTypeConfiguration<UserOrgani
 
         builder.Property(x => x.UserId).IsRequired();
         builder.Property(x => x.OrganizationId).HasConversion(x => x.Value, x => new OrganizationId(x));
+        builder.Property(x => x.OrganizationalUnitId)
+            .HasConversion(x => x!.Value, x => new OrganizationalUnitId(x))
+            .IsRequired(false);
 
         builder.Property(x => x.Role)
             .HasColumnType("varchar(50)")
@@ -36,9 +39,16 @@ public class UserOrganizationConfiguration : IEntityTypeConfiguration<UserOrgani
             .HasForeignKey(x => x.OrganizationId)
             .HasConstraintName("fk_user_organizations_organizations_id")
             .OnDelete(DeleteBehavior.Cascade);
+        
+        builder.HasOne(x => x.OrganizationalUnit)
+            .WithMany()
+            .HasForeignKey(x => x.OrganizationalUnitId)
+            .HasConstraintName("fk_user_organizations_organizational_units_id")
+            .OnDelete(DeleteBehavior.SetNull);
 
         builder.HasIndex(x => x.UserId);
         builder.HasIndex(x => x.OrganizationId);
+        builder.HasIndex(x => x.OrganizationalUnitId); 
         builder.HasIndex(x => new { x.UserId, x.OrganizationId }).IsUnique();
     }
 }
