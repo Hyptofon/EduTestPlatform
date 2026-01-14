@@ -21,8 +21,10 @@ public class InviteCodesController(ISender sender) : ControllerBase
         var query = new GetInviteCodeByIdQuery(id);
         var inviteCode = await sender.Send(query, cancellationToken);
 
+        var baseUrl = $"{Request.Scheme}://{Request.Host}";
+
         return inviteCode.Match<ActionResult<InviteCodeDto>>(
-            i => InviteCodeDto.FromDomainModel(i),
+            i => InviteCodeDto.FromDomainModel(i, baseUrl),
             () => NotFound());
     }
 
@@ -34,10 +36,15 @@ public class InviteCodesController(ISender sender) : ControllerBase
     {
         var query = new GetInviteCodesByOrganizationQuery(organizationId, onlyActive);
         var inviteCodes = await sender.Send(query, cancellationToken);
-        return inviteCodes.Select(InviteCodeDto.FromDomainModel).ToList();
+        
+        var baseUrl = $"{Request.Scheme}://{Request.Host}";
+        
+        return inviteCodes
+            .Select(i => InviteCodeDto.FromDomainModel(i, baseUrl))
+            .ToList();
     }
-
-    [Authorize(Roles = "SuperAdmin,OrganizationAdmin")]
+    
+    [Authorize(Roles = "SuperAdmin,OrganizationAdmin,Teacher")]
     [HttpPost]
     public async Task<ActionResult<InviteCodeDto>> Create(
         [FromBody] CreateInviteCodeDto request,
@@ -47,7 +54,7 @@ public class InviteCodesController(ISender sender) : ControllerBase
         {
             OrganizationId = request.OrganizationId,
             OrganizationalUnitId = request.OrganizationalUnitId,
-            Code = request.Code,
+            Code = request.Code, 
             Type = request.Type,
             AssignedRole = request.AssignedRole,
             ExpiresAt = request.ExpiresAt,
@@ -55,9 +62,11 @@ public class InviteCodesController(ISender sender) : ControllerBase
         };
 
         var result = await sender.Send(command, cancellationToken);
+        
+        var baseUrl = $"{Request.Scheme}://{Request.Host}";
 
         return result.Match<ActionResult<InviteCodeDto>>(
-            i => InviteCodeDto.FromDomainModel(i),
+            i => InviteCodeDto.FromDomainModel(i, baseUrl),
             e => e.ToObjectResult());
     }
 
@@ -69,7 +78,7 @@ public class InviteCodesController(ISender sender) : ControllerBase
     {
         var command = new ValidateAndUseInviteCodeCommand(request.Code);
         var result = await sender.Send(command, cancellationToken);
-
+        
         return result.Match<ActionResult<InviteCodeDto>>(
             i => InviteCodeDto.FromDomainModel(i),
             e => e.ToObjectResult());

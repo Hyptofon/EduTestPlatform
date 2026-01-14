@@ -9,7 +9,7 @@ public class Test
     public Guid CreatedByUserId { get; }
     public string Title { get; private set; }
     public string? Description { get; private set; }
-    public TestSettings Settings { get; private set; }
+    public TestSettings Settings { get; private set; } = null!;
     public string ContentJson { get; private set; }
     public DateTime CreatedAt { get; }
     public DateTime? UpdatedAt { get; private set; }
@@ -23,7 +23,6 @@ public class Test
         Guid createdByUserId,
         string title,
         string? description,
-        TestSettings settings,
         string contentJson,
         DateTime createdAt,
         DateTime? updatedAt)
@@ -33,7 +32,6 @@ public class Test
         CreatedByUserId = createdByUserId;
         Title = title;
         Description = description;
-        Settings = settings;
         ContentJson = contentJson;
         CreatedAt = createdAt;
         UpdatedAt = updatedAt;
@@ -54,16 +52,19 @@ public class Test
         if (string.IsNullOrWhiteSpace(contentJson))
             throw new ArgumentException("Test content cannot be empty", nameof(contentJson));
 
-        return new Test(
+        var test = new Test(
             id,
             subjectId,
             createdByUserId,
             title,
             description,
-            settings,
             contentJson,
             DateTime.UtcNow,
             null);
+            
+        test.Settings = settings; 
+
+        return test;
     }
 
     public void UpdateDetails(string title, string? description, TestSettings settings)

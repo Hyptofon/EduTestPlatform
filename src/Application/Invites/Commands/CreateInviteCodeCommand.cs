@@ -12,7 +12,7 @@ public record CreateInviteCodeCommand : IRequest<Either<InviteCodeException, Inv
 {
     public required Guid OrganizationId { get; init; }
     public Guid? OrganizationalUnitId { get; init; }
-    public required string Code { get; init; }
+    public string? Code { get; init; } 
     public required InviteCodeType Type { get; init; }
     public required string AssignedRole { get; init; }
     public DateTime? ExpiresAt { get; init; }
@@ -30,10 +30,13 @@ public class CreateInviteCodeCommandHandler(
         CreateInviteCodeCommand request,
         CancellationToken cancellationToken)
     {
-        var existingCode = await inviteCodeRepository.GetByCodeAsync(request.Code, cancellationToken);
-        if (existingCode.IsSome)
+        if (!string.IsNullOrWhiteSpace(request.Code))
         {
-            return new InviteCodeAlreadyExistsException(request.Code);
+            var existingCode = await inviteCodeRepository.GetByCodeAsync(request.Code, cancellationToken);
+            if (existingCode.IsSome)
+            {
+                return new InviteCodeAlreadyExistsException(request.Code);
+            }
         }
 
         var organizationId = new OrganizationId(request.OrganizationId);
@@ -41,7 +44,7 @@ public class CreateInviteCodeCommandHandler(
 
         if (organizationExists.IsNone)
         {
-            return new InviteCodeNotValidException(request.Code, "Organization not found");
+            return new InviteCodeNotValidException(request.Code ?? "Auto-generated", "Organization not found");
         }
 
         if (request.OrganizationalUnitId.HasValue)
@@ -51,7 +54,7 @@ public class CreateInviteCodeCommandHandler(
 
             if (unitExists.IsNone)
             {
-                return new InviteCodeNotValidException(request.Code, "Organizational unit not found");
+                return new InviteCodeNotValidException(request.Code ?? "Auto-generated", "Organizational unit not found");
             }
         }
 
@@ -68,12 +71,16 @@ public class CreateInviteCodeCommandHandler(
             var unitId = request.OrganizationalUnitId.HasValue 
                 ? new OrganizationalUnitId(request.OrganizationalUnitId.Value) 
                 : null;
+            
+            var codeToUse = !string.IsNullOrWhiteSpace(request.Code) 
+                ? request.Code 
+                : await GenerateUniqueCodeAsync(cancellationToken);
 
             var inviteCode = InviteCode.New(
                 InviteCodeId.New(),
                 organizationId,
                 unitId,
-                request.Code,
+                codeToUse,
                 request.Type,
                 request.AssignedRole,
                 request.ExpiresAt,
@@ -87,6 +94,24 @@ public class CreateInviteCodeCommandHandler(
         catch (Exception exception)
         {
             return new UnhandledInviteCodeException(InviteCodeId.Empty(), exception);
+        }
+    }
+
+    private async Task<string> GenerateUniqueCodeAsync(CancellationToken cancellationToken)
+    {
+        const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+        var random = new Random();
+        
+        while (true)
+        {
+            var code = new string(Enumerable.Repeat(chars, 8)
+                .Select(s => s[random.Next(s.Length)]).ToArray());
+            
+            var exists = await inviteCodeRepository.GetByCodeAsync(code, cancellationToken);
+            if (exists.IsNone)
+            {
+                return code;
+            }
         }
     }
 }

@@ -1,7 +1,9 @@
 ﻿using Domain.Tests;
 using Infrastructure.Persistence.Converters;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using System.Text.Json; 
 
 namespace Infrastructure.Persistence.Configurations;
 
@@ -28,20 +30,26 @@ public class TestSessionConfiguration : IEntityTypeConfiguration<TestSession>
         builder.Property(x => x.FinishedAt)
             .HasConversion(new DateTimeUtcConverter())
             .IsRequired(false);
-
+        
         builder.Property(x => x.Answers)
             .HasColumnType("jsonb")
             .HasConversion(
-                v => System.Text.Json.JsonSerializer.Serialize(v, (System.Text.Json.JsonSerializerOptions?)null),
-                v => System.Text.Json.JsonSerializer.Deserialize<List<StudentAnswer>>(v, (System.Text.Json.JsonSerializerOptions?)null) ?? new List<StudentAnswer>())
-            .IsRequired();
-
+                v => JsonSerializer.Serialize(v, (JsonSerializerOptions?)null),
+                v => JsonSerializer.Deserialize<List<StudentAnswer>>(v, (JsonSerializerOptions?)null) ?? new List<StudentAnswer>())
+            .Metadata.SetValueComparer(new ValueComparer<List<StudentAnswer>>(
+                (c1, c2) => JsonSerializer.Serialize(c1, (JsonSerializerOptions?)null) == JsonSerializer.Serialize(c2, (JsonSerializerOptions?)null),
+                c => c.Aggregate(0, (a, v) => HashCode.Combine(a, v.GetHashCode())),
+                c => JsonSerializer.Deserialize<List<StudentAnswer>>(JsonSerializer.Serialize(c, (JsonSerializerOptions?)null), (JsonSerializerOptions?)null)!));
+        
         builder.Property(x => x.Violations)
             .HasColumnType("jsonb")
             .HasConversion(
-                v => System.Text.Json.JsonSerializer.Serialize(v, (System.Text.Json.JsonSerializerOptions?)null),
-                v => System.Text.Json.JsonSerializer.Deserialize<List<Violation>>(v, (System.Text.Json.JsonSerializerOptions?)null) ?? new List<Violation>())
-            .IsRequired();
+                v => JsonSerializer.Serialize(v, (JsonSerializerOptions?)null),
+                v => JsonSerializer.Deserialize<List<Violation>>(v, (JsonSerializerOptions?)null) ?? new List<Violation>())
+            .Metadata.SetValueComparer(new ValueComparer<List<Violation>>(
+                (c1, c2) => JsonSerializer.Serialize(c1, (JsonSerializerOptions?)null) == JsonSerializer.Serialize(c2, (JsonSerializerOptions?)null),
+                c => c.Aggregate(0, (a, v) => HashCode.Combine(a, v.GetHashCode())),
+                c => JsonSerializer.Deserialize<List<Violation>>(JsonSerializer.Serialize(c, (JsonSerializerOptions?)null), (JsonSerializerOptions?)null)!));
 
         builder.Property(x => x.TotalScore).IsRequired();
         builder.Property(x => x.MaxScore).IsRequired();

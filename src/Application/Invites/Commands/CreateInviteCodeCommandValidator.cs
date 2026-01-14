@@ -7,14 +7,13 @@ public class CreateInviteCodeCommandValidator : AbstractValidator<CreateInviteCo
     public CreateInviteCodeCommandValidator()
     {
         RuleFor(x => x.OrganizationId).NotEmpty();
-
+        
         RuleFor(x => x.Code)
-            .NotEmpty()
-            .WithMessage("Invite code is required")
             .MaximumLength(100)
             .WithMessage("Invite code must not exceed 100 characters")
             .Matches(@"^[a-zA-Z0-9\-_]+$")
-            .WithMessage("Invite code can only contain letters, numbers, hyphens and underscores");
+            .WithMessage("Invite code can only contain letters, numbers, hyphens and underscores")
+            .When(x => !string.IsNullOrEmpty(x.Code));
 
         RuleFor(x => x.Type)
             .IsInEnum()

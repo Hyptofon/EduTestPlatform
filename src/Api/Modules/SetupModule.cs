@@ -1,4 +1,5 @@
 ﻿using System.Text;
+using System.Text.Json.Serialization; 
 using Api.Filters;
 using Api.Services;
 using Application.Common.Interfaces;
@@ -17,7 +18,12 @@ public static class SetupModule
         { 
             options.Filters.Add<ValidationFilter>();
             options.Filters.Add<ValidationExceptionFilter>(); 
+        })
+        .AddJsonOptions(options => 
+        {
+            options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
         });
+
         services.AddCors();
         services.AddRequestValidators();
         services.AddAuthenticationServices(configuration);
