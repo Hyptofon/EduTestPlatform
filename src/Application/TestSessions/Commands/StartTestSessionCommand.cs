@@ -5,7 +5,7 @@ using Application.TestSessions.Exceptions;
 using Domain.Tests;
 using LanguageExt;
 using MediatR;
-
+using System.Text.Json; 
 namespace Application.TestSessions.Commands;
 
 public record StartTestSessionCommand : IRequest<Either<TestSessionException, TestSession>>
@@ -34,10 +34,22 @@ public class StartTestSessionCommandHandler(
         }
 
         var test = testOption.IfNone(() => throw new InvalidOperationException());
+        
+        var now = DateTime.UtcNow;
 
+        if (test.Settings.StartDate.HasValue && now < test.Settings.StartDate.Value)
+        {
+            return new TestAvailabilityException(testId, "Test has not started yet.");
+        }
+
+        if (test.Settings.EndDate.HasValue && now > test.Settings.EndDate.Value)
+        {
+            return new TestAvailabilityException(testId, "Test execution period has ended.");
+        }
+        
         if (!test.IsAccessible())
         {
-            return new TestSessionNotFoundException(TestSessionId.Empty());
+            return new TestAvailabilityException(testId, "Test is currently not accessible.");
         }
 
         var isEnrolled = await enrollmentRepository.IsUserEnrolledAsync(
@@ -73,8 +85,23 @@ public class StartTestSessionCommandHandler(
     {
         try
         {
-            var contentJson = System.Text.Json.JsonSerializer.Deserialize<TestContentDto>(test.ContentJson);
-            var maxScore = contentJson?.Questions?.Sum(q => q.Points) ?? 0;
+            var contentJson = JsonSerializer.Deserialize<TestContentDto>(test.ContentJson);
+            var questions = contentJson?.Questions ?? new List<QuestionDto>();
+            
+            int maxScore;
+
+            if (test.Settings.BankModeQuestionCount.HasValue && 
+                test.Settings.BankModeQuestionCount.Value > 0 &&
+                test.Settings.BankModeQuestionCount.Value < questions.Count)
+            {
+                maxScore = questions
+                    .Take(test.Settings.BankModeQuestionCount.Value)
+                    .Sum(q => q.Points);
+            }
+            else
+            {
+                maxScore = questions.Sum(q => q.Points);
+            }
 
             var session = TestSession.New(testId, studentId, maxScore);
 

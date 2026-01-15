@@ -23,5 +23,8 @@ public class TestSessionNotInProgressException(TestSessionId sessionId)
 public class UnauthorizedSessionAccessException(TestSessionId sessionId)
     : TestSessionException(sessionId, "User is not authorized to access this test session");
 
+public class TestAvailabilityException(TestId testId, string message)
+    : TestSessionException(TestSessionId.Empty(), $"Test {testId} is not available: {message}");
+
 public class UnhandledTestSessionException(TestSessionId sessionId, Exception? innerException)
     : TestSessionException(sessionId, "Unexpected error occurred while processing test session", innerException);
