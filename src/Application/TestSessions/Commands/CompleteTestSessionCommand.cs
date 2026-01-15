@@ -1,5 +1,6 @@
 ﻿using Application.Common.Interfaces;
 using Application.Common.Interfaces.Repositories;
+using Application.Tests.Dtos;
 using Application.TestSessions.Exceptions;
 using Domain.Tests;
 using LanguageExt;
@@ -82,7 +83,7 @@ public class CompleteTestSessionCommandHandler(
             "SingleChoice" => GradeSingleChoice(studentAnswer, question),
             "MultipleChoice" => GradeMultipleChoice(studentAnswer, question),
             "ShortAnswer" => GradeShortAnswer(studentAnswer, question),
-            "OpenEssay" => 0,
+            "OpenEssay" => 0, // руцями переверяє викладач аля есе і т.д.
             _ => 0
         };
     }
@@ -112,39 +113,21 @@ public class CompleteTestSessionCommandHandler(
 
         return correctIds.SetEquals(selectedIds) ? question.Points : 0;
     }
-
+    
     private int GradeShortAnswer(StudentAnswer studentAnswer, QuestionForGradingDto question)
     {
         if (string.IsNullOrWhiteSpace(studentAnswer.TextAnswer))
             return 0;
-
-        var correctAnswer = question.Answers?.FirstOrDefault(a => a.IsCorrect);
-        if (correctAnswer == null)
+        
+        var correctAnswers = question.Answers?.Where(a => a.IsCorrect).ToList();
+        
+        if (correctAnswers == null || !correctAnswers.Any())
             return 0;
 
         var studentText = studentAnswer.TextAnswer.Trim().ToLower();
-        var correctText = correctAnswer.Text.Trim().ToLower();
+        
+        var isCorrect = correctAnswers.Any(a => a.Text.Trim().ToLower() == studentText);
 
-        return studentText == correctText ? question.Points : 0;
+        return isCorrect ? question.Points : 0;
     }
-}
-
-public record TestContentForGradingDto
-{
-    public List<QuestionForGradingDto>? Questions { get; init; }
-}
-
-public record QuestionForGradingDto
-{
-    public Guid Id { get; init; }
-    public string Type { get; init; } = string.Empty;
-    public int Points { get; init; }
-    public List<AnswerForGradingDto>? Answers { get; init; }
-}
-
-public record AnswerForGradingDto
-{
-    public Guid Id { get; init; }
-    public string Text { get; init; } = string.Empty;
-    public bool IsCorrect { get; init; }
 }

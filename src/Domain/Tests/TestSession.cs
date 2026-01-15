@@ -60,17 +60,13 @@ public class TestSession
             maxScore,
             null);
     }
-
+    
     public void SubmitAnswer(StudentAnswer answer)
     {
         if (Status != TestSessionStatus.InProgress)
             throw new InvalidOperationException("Cannot submit answer to non-active session");
-
-        var existing = Answers.FirstOrDefault(a => a.QuestionId == answer.QuestionId);
-        if (existing != null)
-        {
-            Answers.Remove(existing);
-        }
+        
+        Answers.RemoveAll(a => a.QuestionId == answer.QuestionId);
 
         Answers.Add(answer);
     }
