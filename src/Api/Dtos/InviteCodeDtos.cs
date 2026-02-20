@@ -48,3 +48,14 @@ public record CreateInviteCodeDto(
     int? MaxUses);
 
 public record ValidateInviteCodeDto(string Code);
+
+/// <summary>
+/// DTO для Magic Link з вшитим інвайт-кодом.
+/// </summary>
+public record MagicLinkDto
+{
+    public string MagicLink { get; init; } = string.Empty;
+    public string Code { get; init; } = string.Empty;
+    public string OrganizationName { get; init; } = string.Empty;
+    public DateTime? ExpiresAt { get; init; }
+}

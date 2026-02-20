@@ -1,3 +1,4 @@
+using Api.Hubs;
 using Api.Modules;
 using Application;
 using Infrastructure;
@@ -9,6 +10,9 @@ builder.Services.AddInfrastructureServices(builder.Configuration);
 builder.Services.SetupServices(builder.Configuration);
 builder.Services.AddApplicationServices();
 builder.Services.AddControllers();
+
+// SignalR для real-time моніторингу
+builder.Services.AddSignalR();
 
 var app = builder.Build();
 
@@ -43,6 +47,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+app.MapHub<TestSessionHub>("/hubs/test-session");
 
 app.Run();
 

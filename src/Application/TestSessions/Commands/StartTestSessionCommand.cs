@@ -1,6 +1,7 @@
 ﻿using Application.Common.Interfaces;
 using Application.Common.Interfaces.Repositories;
 using Application.Tests.Exceptions;
+using Application.TestSessions.Events;
 using Application.TestSessions.Exceptions;
 using Domain.Tests;
 using LanguageExt;
@@ -18,7 +19,8 @@ public class StartTestSessionCommandHandler(
     ITestSessionRepository sessionRepository,
     ITestRepository testRepository,
     ISubjectEnrollmentRepository enrollmentRepository,
-    IApplicationDbContext dbContext)
+    IApplicationDbContext dbContext,
+    IPublisher publisher)
     : IRequestHandler<StartTestSessionCommand, Either<TestSessionException, TestSession>>
 {
     public async Task<Either<TestSessionException, TestSession>> Handle(
@@ -107,6 +109,15 @@ public class StartTestSessionCommandHandler(
 
             sessionRepository.Add(session);
             await dbContext.SaveChangesAsync(cancellationToken);
+
+            // Публікуємо подію для SignalR сповіщення
+            await publisher.Publish(new TestSessionStartedEvent
+            {
+                SessionId = session.Id.Value,
+                TestId = testId.Value,
+                UserId = studentId,
+                StartedAt = session.StartedAt
+            }, cancellationToken);
 
             return session;
         }

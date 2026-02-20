@@ -156,4 +156,72 @@ public class TestsController(ISender sender, ICurrentUserService currentUserServ
             t => TestDto.FromDomainModel(t),
             e => e.ToObjectResult());
     }
+
+    /// <summary>
+    /// Імпортувати питання з CSV/Excel файлу в існуючий тест.
+    /// </summary>
+    [Authorize(Roles = "Teacher,OrganizationAdmin,SuperAdmin")]
+    [HttpPost("{id:guid}/import")]
+    public async Task<ActionResult<ImportResultDto>> ImportQuestions(
+        [FromRoute] Guid id,
+        [FromForm] IFormFile file,
+        [FromQuery] bool replaceExisting = false,
+        CancellationToken cancellationToken = default)
+    {
+        var command = new ImportTestQuestionsCommand
+        {
+            TestId = id,
+            File = file,
+            ReplaceExisting = replaceExisting
+        };
+
+        var result = await sender.Send(command, cancellationToken);
+
+        return result.Match<ActionResult<ImportResultDto>>(
+            r => new ImportResultDto
+            {
+                ImportedCount = r.ImportedCount,
+                SkippedCount = r.SkippedCount,
+                Errors = r.Errors.ToList(),
+                Warnings = r.Warnings.ToList()
+            },
+            e => e.ToObjectResult());
+    }
+
+    /// <summary>
+    /// Експортувати тест у CSV або JSON формат.
+    /// </summary>
+    [Authorize(Roles = "Teacher,OrganizationAdmin,SuperAdmin")]
+    [HttpGet("{id:guid}/export")]
+    public async Task<IActionResult> Export(
+        [FromRoute] Guid id,
+        [FromQuery] string format = "csv",
+        CancellationToken cancellationToken = default)
+    {
+        var query = new ExportTestQuery
+        {
+            TestId = id,
+            Format = format
+        };
+
+        var result = await sender.Send(query, cancellationToken);
+
+        return result.Match<IActionResult>(
+            r => File(r.Content, r.ContentType, r.FileName),
+            e => e.ToObjectResult());
+    }
+
+    /// <summary>
+    /// Завантажити шаблон для імпорту питань.
+    /// </summary>
+    [Authorize(Roles = "Teacher,OrganizationAdmin,SuperAdmin")]
+    [HttpGet("import-template")]
+    public async Task<IActionResult> GetImportTemplate(
+        CancellationToken cancellationToken = default)
+    {
+        var query = new GetImportTemplateQuery();
+        var result = await sender.Send(query, cancellationToken);
+
+        return File(result.Content, result.ContentType, result.FileName);
+    }
 }

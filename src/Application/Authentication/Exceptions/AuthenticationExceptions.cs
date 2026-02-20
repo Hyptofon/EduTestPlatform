@@ -24,5 +24,11 @@ public class TokenRefreshFailedException(string errors)
 public class UserCreationException(string errors)
     : AuthenticationException($"Failed to create user: {errors}");
 
+public class InvalidInviteCodeException(string code)
+    : AuthenticationException($"Invalid or expired invite code: {code}");
+
+public class InviteCodeRequiredException()
+    : AuthenticationException("Registration requires a valid invite code");
+
 public class UnhandledAuthenticationException(Exception? innerException)
     : AuthenticationException("Unexpected error occurred during authentication", innerException);

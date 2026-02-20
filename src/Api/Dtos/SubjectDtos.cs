@@ -54,3 +54,18 @@ public record SubjectEnrollmentDto(
             enrollment.UserId,
             enrollment.EnrolledAt);
 }
+
+/// <summary>
+/// DTO для перевірки Access Key предмету.
+/// </summary>
+public record ValidateAccessKeyDto(string? AccessKey);
+
+/// <summary>
+/// Результат перевірки Access Key.
+/// </summary>
+public record SubjectAccessValidationDto
+{
+    public bool IsValid { get; init; }
+    public bool IsPublic { get; init; }
+    public string SubjectName { get; init; } = string.Empty;
+}

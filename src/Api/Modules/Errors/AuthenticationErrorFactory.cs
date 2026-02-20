@@ -18,6 +18,8 @@ public static class AuthenticationErrorFactory
                 InvalidRoleException => StatusCodes.Status400BadRequest,
                 TokenRefreshFailedException => StatusCodes.Status500InternalServerError,
                 UserCreationException => StatusCodes.Status400BadRequest,
+                InvalidInviteCodeException => StatusCodes.Status400BadRequest,
+                InviteCodeRequiredException => StatusCodes.Status400BadRequest,
                 UnhandledAuthenticationException => StatusCodes.Status500InternalServerError,
                 _ => throw new NotImplementedException("Authentication error handler not implemented")
             }

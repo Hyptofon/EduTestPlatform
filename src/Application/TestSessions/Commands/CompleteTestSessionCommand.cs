@@ -111,7 +111,20 @@ public class CompleteTestSessionCommandHandler(
 
         var selectedIds = studentAnswer.SelectedAnswerIds.ToHashSet();
 
-        return correctIds.SetEquals(selectedIds) ? question.Points : 0;
+        // Повні бали при точному співпадінні
+        if (correctIds.SetEquals(selectedIds))
+            return question.Points;
+
+        // Часткові бали: (правильні - помилкові) / всього правильних * бали
+        var correctSelected = selectedIds.Intersect(correctIds).Count();
+        var incorrectSelected = selectedIds.Except(correctIds).Count();
+
+        if (correctIds.Count == 0)
+            return 0;
+
+        var partialScore = (correctSelected - incorrectSelected) / (double)correctIds.Count * question.Points;
+
+        return Math.Max(0, (int)Math.Round(partialScore));
     }
     
     private int GradeShortAnswer(StudentAnswer studentAnswer, QuestionForGradingDto question)
@@ -124,10 +137,29 @@ public class CompleteTestSessionCommandHandler(
         if (correctAnswers == null || !correctAnswers.Any())
             return 0;
 
-        var studentText = studentAnswer.TextAnswer.Trim().ToLower();
+        // Нормалізація тексту студента: trim, видалення зайвих пробілів, lowercase
+        var studentText = NormalizeText(studentAnswer.TextAnswer);
         
-        var isCorrect = correctAnswers.Any(a => a.Text.Trim().ToLower() == studentText);
+        // Перевіряємо чи співпадає з будь-якою правильною відповіддю
+        var isCorrect = correctAnswers.Any(a => NormalizeText(a.Text) == studentText);
 
         return isCorrect ? question.Points : 0;
+    }
+
+    /// <summary>
+    /// Нормалізує текст: trim, видаляє зайві пробіли, приводить до нижнього регістру.
+    /// </summary>
+    private static string NormalizeText(string text)
+    {
+        if (string.IsNullOrWhiteSpace(text))
+            return string.Empty;
+
+        // Видаляємо пробіли на початку і в кінці
+        var trimmed = text.Trim();
+
+        // Замінюємо множинні пробіли на один
+        var normalized = System.Text.RegularExpressions.Regex.Replace(trimmed, @"\s+", " ");
+
+        return normalized.ToLowerInvariant();
     }
 }

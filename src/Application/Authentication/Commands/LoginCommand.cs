@@ -1,6 +1,8 @@
 ﻿using Application.Authentication.Exceptions;
 using Application.Authentication.Interfaces;
 using Application.Authentication.Models;
+using Application.Common.Interfaces;
+using Domain.Audit;
 using Domain.Users;
 using LanguageExt;
 using MediatR;
@@ -17,7 +19,8 @@ public record LoginCommand : IRequest<Either<AuthenticationException, Authentica
 public class LoginCommandHandler(
     UserManager<ApplicationUser> userManager,
     SignInManager<ApplicationUser> signInManager,
-    IJwtTokenGenerator jwtTokenGenerator)
+    IJwtTokenGenerator jwtTokenGenerator,
+    IAuditService auditService)
     : IRequestHandler<LoginCommand, Either<AuthenticationException, AuthenticationResult>>
 {
     public async Task<Either<AuthenticationException, AuthenticationResult>> Handle(
@@ -50,6 +53,14 @@ public class LoginCommandHandler(
             var refreshToken = jwtTokenGenerator.GenerateRefreshToken();
             user.SetRefreshToken(refreshToken, DateTime.UtcNow.AddDays(7));
             await userManager.UpdateAsync(user);
+
+            // Логування успішного логіну
+            await auditService.LogAuthenticationAsync(
+                AuditActions.UserLogin,
+                user.Id,
+                user.Email!,
+                user.LastActiveOrganizationId?.Value,
+                cancellationToken);
 
             return new AuthenticationResult
             {

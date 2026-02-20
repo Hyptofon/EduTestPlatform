@@ -135,4 +135,32 @@ public class SubjectsController(ISender sender, ICurrentUserService currentUserS
             e => SubjectEnrollmentDto.FromDomainModel(e),
             error => error.ToObjectResult());
     }
+
+    /// <summary>
+    /// Перевіряє Access Key предмету БЕЗ enrollment.
+    /// Використовується для UI: показати користувачу чи валідний ключ перед приєднанням.
+    /// </summary>
+    [HttpPost("{id:guid}/validate-access-key")]
+    public async Task<ActionResult<SubjectAccessValidationDto>> ValidateAccessKey(
+        [FromRoute] Guid id,
+        [FromBody] ValidateAccessKeyDto request,
+        CancellationToken cancellationToken)
+    {
+        var query = new ValidateSubjectAccessKeyQuery
+        {
+            SubjectId = id,
+            AccessKey = request.AccessKey
+        };
+
+        var result = await sender.Send(query, cancellationToken);
+
+        return result.Match<ActionResult<SubjectAccessValidationDto>>(
+            r => new SubjectAccessValidationDto
+            {
+                IsValid = r.IsValid,
+                IsPublic = r.IsPublic,
+                SubjectName = r.SubjectName
+            },
+            error => error.ToObjectResult());
+    }
 }

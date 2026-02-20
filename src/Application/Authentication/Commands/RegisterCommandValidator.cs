@@ -26,5 +26,10 @@ public class RegisterCommandValidator : AbstractValidator<RegisterCommand>
         RuleFor(x => x.LastName)
             .NotEmpty()
             .MaximumLength(100);
+
+        RuleFor(x => x.InviteCode)
+            .NotEmpty()
+            .WithMessage("Invite code is required for registration")
+            .MaximumLength(50);
     }
 }

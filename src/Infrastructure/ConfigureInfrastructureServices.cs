@@ -3,6 +3,7 @@ using Application.Common.Interfaces;
 using Infrastructure.Authentication;
 using Infrastructure.FileStorage;
 using Infrastructure.Persistence;
+using Infrastructure.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -16,6 +17,7 @@ public static class ConfigureInfrastructureServices
         services.AddFileStorageServices();
         
         services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
+        services.AddScoped<IAuditService, AuditService>();
 
         services.AddScoped<ApplicationDbContextInitialiser>();
     }

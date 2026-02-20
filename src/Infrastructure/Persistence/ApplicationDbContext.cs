@@ -5,6 +5,7 @@ using Domain.Invites;
 using Domain.Organizations;
 using Domain.Subjects;
 using Domain.Tests;
+using Domain.Audit;
 using Domain.Users;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
@@ -25,6 +26,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     
     public DbSet<Test> Tests { get; init; }
     public DbSet<TestSession> TestSessions { get; init; }
+    public DbSet<AuditLog> AuditLogs { get; init; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

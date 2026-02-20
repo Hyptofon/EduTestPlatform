@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using Domain.Organizations;
+using Microsoft.AspNetCore.Identity;
 
 namespace Domain.Users;
 
@@ -12,6 +13,16 @@ public class ApplicationUser : IdentityUser<Guid>
     public string? RefreshToken { get; private set; }
     public DateTime? RefreshTokenExpiryTime { get; private set; }
     public byte[]? RowVersion { get; private set; }
+    
+    /// <summary>
+    /// URL аватара користувача. Може бути null якщо не встановлено.
+    /// </summary>
+    public string? AvatarUrl { get; private set; }
+    
+    /// <summary>
+    /// ID останньої активної організації для швидкого перемикання workspace.
+    /// </summary>
+    public OrganizationId? LastActiveOrganizationId { get; private set; }
 
     private ApplicationUser() { }
 
@@ -34,6 +45,24 @@ public class ApplicationUser : IdentityUser<Guid>
     {
         FirstName = firstName;
         LastName = lastName;
+        UpdatedAt = DateTime.UtcNow;
+    }
+    
+    /// <summary>
+    /// Оновлює аватар користувача.
+    /// </summary>
+    public void UpdateAvatar(string? avatarUrl)
+    {
+        AvatarUrl = avatarUrl;
+        UpdatedAt = DateTime.UtcNow;
+    }
+    
+    /// <summary>
+    /// Встановлює останню активну організацію для workspace switching.
+    /// </summary>
+    public void SetLastActiveOrganization(OrganizationId? organizationId)
+    {
+        LastActiveOrganizationId = organizationId;
         UpdatedAt = DateTime.UtcNow;
     }
 

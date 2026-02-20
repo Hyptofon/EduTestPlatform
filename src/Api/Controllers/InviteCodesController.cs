@@ -97,4 +97,39 @@ public class InviteCodesController(ISender sender) : ControllerBase
             i => InviteCodeDto.FromDomainModel(i),
             e => e.ToObjectResult());
     }
+
+    /// <summary>
+    /// Генерує Magic Link URL з вшитим інвайт-кодом.
+    /// При переході за посиланням, код автоматично заповнюється на формі реєстрації.
+    /// </summary>
+    [Authorize(Roles = "SuperAdmin,OrganizationAdmin,Teacher")]
+    [HttpGet("{id:guid}/magic-link")]
+    public async Task<ActionResult<MagicLinkDto>> GenerateMagicLink(
+        [FromRoute] Guid id,
+        [FromQuery] string? frontendBaseUrl,
+        CancellationToken cancellationToken)
+    {
+        // Використовуємо frontend URL або поточний хост
+        var baseUrl = !string.IsNullOrWhiteSpace(frontendBaseUrl) 
+            ? frontendBaseUrl 
+            : $"{Request.Scheme}://{Request.Host}";
+
+        var query = new GenerateMagicLinkQuery
+        {
+            InviteCodeId = id,
+            BaseUrl = baseUrl
+        };
+
+        var result = await sender.Send(query, cancellationToken);
+
+        return result.Match<ActionResult<MagicLinkDto>>(
+            r => new MagicLinkDto
+            {
+                MagicLink = r.MagicLink,
+                Code = r.Code,
+                OrganizationName = r.OrganizationName,
+                ExpiresAt = r.ExpiresAt
+            },
+            e => e.ToObjectResult());
+    }
 }

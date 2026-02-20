@@ -2,6 +2,7 @@
 using Application.Common.Interfaces.Repositories;
 using Domain.Users;
 using Infrastructure.Persistence.Repositories;
+using Infrastructure.Repositories;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
@@ -58,5 +59,6 @@ public static class ConfigurePersistenceServices
         
         services.AddScoped<ITestRepository, TestRepository>();
         services.AddScoped<ITestSessionRepository, TestSessionRepository>();
+        services.AddScoped<IAuditLogRepository, AuditLogRepository>();
     }
 }

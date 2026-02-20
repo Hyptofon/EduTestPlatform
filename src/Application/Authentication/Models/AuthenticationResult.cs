@@ -9,4 +9,10 @@ public record AuthenticationResult
     public required string FirstName { get; init; }
     public required string LastName { get; init; }
     public required IReadOnlyList<string> Roles { get; init; }
+    
+    /// <summary>
+    /// ID організації, до якої прив'язаний користувач після реєстрації.
+    /// Для логіну це поле може бути null (юзер сам обирає workspace).
+    /// </summary>
+    public Guid? OrganizationId { get; init; }
 }
